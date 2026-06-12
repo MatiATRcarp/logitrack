@@ -1,0 +1,487 @@
+/* public/css/style.css — Estilos globales Logitrack */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --amarillo:  #FFCA18;
+    --fondo:     #060b18;
+    --panel:     #0a1628;
+    --input-bg:  #0f172a;
+    --borde:     #1d2b45;
+    --texto:     #ffffff;
+    --gris:      #8b92a8;
+    --verde:     #4ade80;
+    --rojo:      #f87171;
+    --azul:      #60a5fa;
+    --violeta:   #a78bfa;
+    --sidebar-w: 240px;
+}
+
+body {
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+}
+
+/* ── LAYOUT CON SIDEBAR ─────────────────────────── */
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── SIDEBAR ────────────────────────────────────── */
+.sidebar {
+    width: var(--sidebar-w);
+    background: var(--panel);
+    border-right: 1px solid var(--borde);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.sidebar-logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--borde);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--texto);
+}
+.sidebar-logo span { color: var(--amarillo); }
+
+.sidebar-user {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--borde);
+}
+.sidebar-user .nombre {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.sidebar-user .rol-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.badge-admin   { background: rgba(255,202,24,.15); color: var(--amarillo); border: 1px solid rgba(255,202,24,.3); }
+.badge-empleado{ background: rgba(74,222,128,.15);  color: var(--verde);    border: 1px solid rgba(74,222,128,.3); }
+.badge-chofer  { background: rgba(96,165,250,.15);  color: var(--azul);     border: 1px solid rgba(96,165,250,.3); }
+.badge-cliente { background: rgba(167,139,250,.15); color: var(--violeta);  border: 1px solid rgba(167,139,250,.3); }
+
+.sidebar-nav {
+    flex: 1;
+    padding: 16px 0;
+}
+
+.nav-section-title {
+    padding: 8px 20px 4px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gris);
+    text-transform: uppercase;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: var(--gris);
+    text-decoration: none;
+    font-size: 14px;
+    transition: .2s;
+    border-left: 3px solid transparent;
+}
+.nav-link:hover, .nav-link.active {
+    color: var(--texto);
+    background: rgba(255,202,24,.05);
+    border-left-color: var(--amarillo);
+}
+.nav-link .icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--borde);
+}
+.btn-logout {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    color: var(--gris);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: .2s;
+}
+.btn-logout:hover { border-color: var(--rojo); color: var(--rojo); }
+
+/* ── CONTENIDO PRINCIPAL ────────────────────────── */
+.main-content {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 32px;
+    min-height: 100vh;
+}
+
+/* ── TOPBAR ─────────────────────────────────────── */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+.page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--texto);
+}
+.page-subtitle { color: var(--gris); font-size: 14px; margin-top: 2px; }
+
+/* ── CARDS ──────────────────────────────────────── */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.card {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.card-metric .valor {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: var(--amarillo);
+    line-height: 1;
+}
+.card-metric .label {
+    color: var(--gris);
+    font-size: 13px;
+    margin-top: 6px;
+}
+.card-metric .icono { font-size: 28px; margin-bottom: 10px; }
+
+/* ── TABLAS ─────────────────────────────────────── */
+.tabla-wrapper {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+.tabla-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--borde);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.tabla-header h3 { font-size: 16px; font-weight: 600; }
+
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--input-bg); }
+th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--gris);
+    text-transform: uppercase;
+    font-weight: 500;
+}
+td {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--input-bg);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,202,24,.02); }
+
+/* ── FORMULARIOS ────────────────────────────────── */
+.form-card {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 600px;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 12px; color: var(--gris); letter-spacing: 1px; text-transform: uppercase; }
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+select, textarea {
+    height: 46px;
+    background: var(--input-bg);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    color: var(--texto);
+    padding: 0 16px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    width: 100%;
+    transition: border-color .2s;
+}
+textarea { height: auto; padding: 12px 16px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: var(--gris); }
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--amarillo);
+}
+select { appearance: none; cursor: pointer; }
+select option { background: var(--input-bg); color: var(--texto); }
+
+/* Autofill fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset;
+    -webkit-text-fill-color: var(--texto);
+    border: 1px solid var(--borde);
+}
+
+/* ── BOTONES ────────────────────────────────────── */
+.btn {
+    height: 44px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity .2s;
+    font-family: 'DM Sans', sans-serif;
+}
+.btn:hover { opacity: .85; }
+.btn-primary   { background: var(--amarillo); color: #000; }
+.btn-danger    { background: rgba(248,113,113,.15); color: var(--rojo);   border: 1px solid rgba(248,113,113,.3); }
+.btn-success   { background: rgba(74,222,128,.15);  color: var(--verde);  border: 1px solid rgba(74,222,128,.3); }
+.btn-secondary { background: rgba(255,255,255,.05); color: var(--gris);   border: 1px solid var(--borde); }
+.btn-sm { height: 32px; padding: 0 12px; font-size: 12px; }
+
+/* ── BADGES ESTADO ──────────────────────────────── */
+.badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.badge-activo    { background: rgba(74,222,128,.15); color: var(--verde); }
+.badge-inactivo  { background: rgba(248,113,113,.15); color: var(--rojo); }
+.badge-transito  { background: rgba(255,202,24,.15);  color: var(--amarillo); }
+.badge-entregado { background: rgba(96,165,250,.15);  color: var(--azul); }
+
+/* ── ALERTAS ────────────────────────────────────── */
+.alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+.alert-error   { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: var(--rojo); }
+.alert-success { background: rgba(74,222,128,.1);  border: 1px solid rgba(74,222,128,.3);  color: var(--verde); }
+.alert-info    { background: rgba(96,165,250,.1);  border: 1px solid rgba(96,165,250,.3);  color: var(--azul); }
+
+/* ── TIMELINE (historial de estados) ────────────── */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.timeline-item {
+    display: flex;
+    gap: 16px;
+    padding-bottom: 24px;
+    position: relative;
+}
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 15px; top: 32px;
+    width: 2px;
+    height: calc(100% - 8px);
+    background: var(--borde);
+}
+.timeline-item:last-child::before { display: none; }
+.timeline-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--amarillo);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    z-index: 1;
+}
+.timeline-body .estado { font-weight: 600; font-size: 15px; }
+.timeline-body .fecha  { color: var(--gris); font-size: 13px; margin-top: 2px; }
+.timeline-body .lugar  { color: var(--gris); font-size: 13px; }
+
+/* ── LOGIN PAGE ─────────────────────────────────── */
+.login-page {
+    display: flex;
+    min-height: 100vh;
+    background-image: url('/logitrack/public/img/fondo2.webp');
+    background-size: cover;
+    background-position: center;
+}
+.login-izquierda {
+    flex: 1;
+    background-image: url('/logitrack/public/img/fondo.jpg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 60px;
+}
+.login-izquierda .info { max-width: 450px; }
+.login-izquierda .subtitulo {
+    color: var(--amarillo);
+    font-size: 13px;
+    letter-spacing: 4px;
+    margin-bottom: 12px;
+}
+.login-izquierda .logo-grande {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    line-height: .9;
+    color: var(--texto);
+}
+.login-izquierda .logo-grande span { color: var(--amarillo); }
+.login-izquierda .descripcion { color: var(--gris); font-size: 15px; line-height: 1.6; margin-top: 16px; }
+
+.login-panel {
+    width: 400px;
+    min-width: 380px;
+    background: var(--fondo);
+    border-left: 1px solid var(--amarillo);
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow-y: auto;
+}
+.login-logo {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 32px;
+}
+.login-logo > span { color: var(--texto); }
+.login-logo > span > span { color: var(--amarillo); }
+.login-logo img { width: 40px; height: 40px; border-radius: 10px; }
+.login-bienvenida { color: var(--gris); font-size: 15px; margin-bottom: 24px; }
+.login-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 44px;
+    margin-bottom: 28px;
+}
+
+/* Tracking público */
+.tracking-box {
+    background: rgba(255,202,24,.05);
+    border: 1px solid rgba(255,202,24,.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+.tracking-box label { color: var(--amarillo); font-size: 12px; letter-spacing: 2px; }
+.tracking-row { display: flex; gap: 8px; margin-top: 8px; }
+.tracking-row input { flex: 1; }
+.tracking-row button { height: 46px; }
+
+/* ── MOBILE (para rol chofer) ───────────────────── */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform .3s;
+    }
+    .sidebar-toggle:checked ~ .sidebar { transform: translateX(0); }
+    .main-content { margin-left: 0; padding: 16px; }
+    .cards-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .login-izquierda { display: none; }
+    .login-panel { width: 100%; min-width: unset; border-left: none; }
+}
+
+/* ── Paneles desplegables sin JS (checkbox hack) ─── */
+.toggle-checkbox { display: none; }
+.toggle-checkbox:checked ~ .form-panel { display: block; }
+
+/* ── Modales de confirmación sin JS (CSS :target) ── */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-overlay:target { display: flex; }
+.modal-box {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 360px;
+    text-align: center;
+}
+.modal-box p { margin-bottom: 20px; font-size: 15px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ── Sidebar móvil sin JS (checkbox hack) ────────── */
+.sidebar-toggle { display: none; }
+
+/* ── Barra de filtros (GET, sin JS) ───────────────── */
+.filtros {
+    display: none;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-end;
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 28px;
+}
+.filtros .form-group { flex: 1 1 160px; min-width: 140px; gap: 6px; }
+.filtros .form-group label { margin: 0; }
+.filtros input, .filtros select { height: 42px; }
+.filtros-acciones { display: flex; gap: 8px; flex: 0 0 auto; }
+
+/* ── Toggle de filtros (checkbox hack) ────────────── */
+.toggle-filtros { display: none; }
+.toggle-filtros:checked ~ .filtros { display: flex; }

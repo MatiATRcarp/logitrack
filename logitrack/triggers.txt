@@ -1,0 +1,46 @@
+- Que un chofer no pueda estar en dos viajes al mismo tiempo
+
+DELIMITER $$
+
+CREATE TRIGGER verificar_chofer_disponible
+BEFORE INSERT ON viaje
+FOR EACH ROW
+BEGIN
+    DECLARE viajes_activos INT;
+
+    SELECT COUNT(*) INTO viajes_activos
+    FROM viaje
+    WHERE id_chofer = NEW.id_chofer
+      AND NEW.fecha_salida < fecha_llegada_est
+      AND NEW.fecha_llegada_est > fecha_salida;
+
+    IF viajes_activos > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El chofer ya tiene un viaje asignado en ese rango de fechas.';
+    END IF;
+END$$
+
+DELIMITER ;
+
+
+- Que no se pueda registrar un cliente con un DNI ya existente
+
+DELIMITER $$
+
+CREATE TRIGGER verificar_dni_cliente_unico
+BEFORE INSERT ON cliente
+FOR EACH ROW
+BEGIN
+    DECLARE dni_existente INT;
+
+    SELECT COUNT(*) INTO dni_existente
+    FROM cliente
+    WHERE dni = NEW.dni;
+
+    IF dni_existente > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Ya existe un cliente registrado con ese DNI.';
+    END IF;
+END$$
+
+DELIMITER ;
