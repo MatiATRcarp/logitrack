@@ -65,8 +65,8 @@ class UsuarioModel {
                 $chk->execute([':dni' => $dni]);
                 if (!$chk->fetch()) {
                     $stmt2 = $this->pdo->prepare("
-                        INSERT INTO cliente (dni, nombre, apellido, email, direccion)
-                        VALUES (:dni, :nombre, :apellido, :email, :direccion)
+                        INSERT INTO cliente (dni, nombre, apellido, email, direccion, activo)
+                        VALUES (:dni, :nombre, :apellido, :email, :direccion, 1)
                     ");
                     $stmt2->execute([
                         ':dni'       => $dni,

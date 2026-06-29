@@ -150,24 +150,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($accion === 'eliminar') {
         $id = (int) ($_POST['id_usuario'] ?? 0);
         if ($id) {
-            try {
-                // Obtener DNI y rol para limpiar tablas vinculadas
-                $stmt = $pdo->prepare("SELECT u.dni, r.nombre AS rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.id_usuario = :id");
-                $stmt->execute([':id' => $id]);
-                $usr = $stmt->fetch();
-                if ($usr) {
-                    if ($usr['rol'] === 'chofer') {
-                        $pdo->prepare("DELETE FROM chofer WHERE dni = :dni")->execute([':dni' => $usr['dni']]);
-                    } elseif ($usr['rol'] === 'cliente') {
-                        $pdo->prepare("DELETE FROM cliente WHERE dni = :dni")->execute([':dni' => $usr['dni']]);
-                    }
-                    $pdo->prepare("DELETE FROM usuario WHERE id_usuario = :id")->execute([':id' => $id]);
-                    $msg = 'Usuario eliminado.';
-                    $msg_tipo = 'success';
-                }
-            } catch (PDOException $e) {
-                $msg = 'No se puede eliminar: el usuario tiene registros asociados (viajes, envíos).';
+            if ($id === (int) $_SESSION['usuario_id']) {
+                $msg      = 'No podés eliminarte a vos mismo.';
                 $msg_tipo = 'error';
+            } else {
+                try {
+                    $stmt = $pdo->prepare("SELECT u.dni, r.nombre AS rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.id_usuario = :id");
+                    $stmt->execute([':id' => $id]);
+                    $usr = $stmt->fetch();
+                    if ($usr) {
+                        if ($usr['rol'] === 'admin') {
+                            $msg      = 'No podés eliminar a otro administrador.';
+                            $msg_tipo = 'error';
+                        } else {
+                            if ($usr['rol'] === 'chofer') {
+                                $pdo->prepare("DELETE FROM chofer WHERE dni = :dni")->execute([':dni' => $usr['dni']]);
+                            } elseif ($usr['rol'] === 'cliente') {
+                                $pdo->prepare("DELETE FROM cliente WHERE dni = :dni")->execute([':dni' => $usr['dni']]);
+                            }
+                            $pdo->prepare("DELETE FROM usuario WHERE id_usuario = :id")->execute([':id' => $id]);
+                            $msg      = 'Usuario eliminado.';
+                            $msg_tipo = 'success';
+                        }
+                    }
+                } catch (PDOException $e) {
+                    $msg      = 'No se puede eliminar: el usuario tiene registros asociados (viajes, envíos).';
+                    $msg_tipo = 'error';
+                }
             }
         }
     }
@@ -405,8 +414,10 @@ $sucursales = $pdo->query("SELECT id_sucursal, nombre FROM sucursal ORDER BY nom
                         </form>
                         <!-- Editar -->
                         <a href="#edit-usuario-<?= $u['id_usuario'] ?>" class="btn-sm btn-edit">Editar</a>
-                        <!-- Eliminar -->
+                        <!-- Eliminar (oculto para admins y para uno mismo) -->
+                        <?php if ($u['rol'] !== 'admin' && $u['id_usuario'] !== (int)$_SESSION['usuario_id']): ?>
                         <a href="#del-usuario-<?= $u['id_usuario'] ?>" class="btn-sm btn-delete">Eliminar</a>
+                        <?php endif; ?>
                         <div class="modal-overlay" id="del-usuario-<?= $u['id_usuario'] ?>">
                             <div class="modal-box">
                                 <p>¿Eliminar a <strong><?= htmlspecialchars($u['nombre'] . ' ' . $u['apellido']) ?></strong>? Esta acción no se puede deshacer.</p>

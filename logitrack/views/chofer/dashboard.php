@@ -56,6 +56,20 @@ $envios_carga = $data['envios_carga'];
             font-family: 'DM Sans', sans-serif;
         }
         .btn-incidente:hover { background: var(--rojo); color: white; }
+        .btn-entregar {
+            padding: 5px 12px;
+            background: rgba(34, 197, 94, .12);
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            color: #22c55e;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: background .2s, color .2s;
+            white-space: nowrap;
+        }
+        .btn-entregar:hover { background: #22c55e; color: #0a0a0a; }
         .hamburger {
             display: none;
             position: fixed;
@@ -83,6 +97,12 @@ $envios_carga = $data['envios_carga'];
     <?php include __DIR__ . '/../layout/sidebar.php'; ?>
 
     <main class="main-content">
+
+        <?php if (!empty($_GET['ok'])): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($_GET['ok']) ?></div>
+        <?php elseif (!empty($_GET['error'])): ?>
+        <div class="alert alert-error"><?= htmlspecialchars($_GET['error']) ?></div>
+        <?php endif; ?>
 
         <div class="topbar">
             <div>
@@ -143,6 +163,8 @@ $envios_carga = $data['envios_carga'];
                             <th>Destino</th>
                             <th>Peso</th>
                             <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -153,6 +175,22 @@ $envios_carga = $data['envios_carga'];
                             <td><?= htmlspecialchars($env['sucursal_destino']) ?></td>
                             <td><?= $env['peso_kg'] ?> kg</td>
                             <td><?= htmlspecialchars($env['tipo_contenido']) ?></td>
+                            <td><?= htmlspecialchars($env['estado_nombre'] ?? '—') ?></td>
+                            <td>
+                                <?php if (in_array((int)($env['id_estado'] ?? 0), [2, 3])): ?>
+                                <form method="POST"
+                                      action="/logitrack/controllers/ChoferController.php?action=confirmarRecepcion"
+                                      style="margin:0;">
+                                    <input type="hidden" name="id_envio" value="<?= (int) $env['id_envio'] ?>">
+                                    <button type="submit" class="btn-entregar"
+                                            onclick="return confirm('¿Confirmás la entrega de este paquete?')">
+                                        ✅ Marcar entregado
+                                    </button>
+                                </form>
+                                <?php else: ?>
+                                <span style="color:var(--gris);font-size:13px;">—</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

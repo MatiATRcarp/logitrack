@@ -8,6 +8,35 @@ $controller = new AdminController($pdo);
 $data       = $controller->getDashboardData();
 $metricas   = $data['metricas'];
 $viajes     = $data['viajes'];
+
+// Vista v_envios_completo (requiere haber ejecutado sql/v_envios_completo.sql)
+$envios_vista      = [];
+$vista_disponible  = true;
+$f_estado_env      = trim($_GET['estado_env'] ?? '');
+$f_busq_env        = trim($_GET['busq_env']   ?? '');
+try {
+    $where_env  = [];
+    $params_env = [];
+    if ($f_estado_env !== '') {
+        $where_env[]             = 'estado_actual = :estado';
+        $params_env[':estado']   = $f_estado_env;
+    }
+    if ($f_busq_env !== '') {
+        $where_env[]             = '(nro_tracking LIKE :busq OR remitente LIKE :busq2 OR destinatario LIKE :busq3)';
+        $b = '%' . $f_busq_env . '%';
+        $params_env[':busq']  = $b;
+        $params_env[':busq2'] = $b;
+        $params_env[':busq3'] = $b;
+    }
+    $sql_env = "SELECT * FROM v_envios_completo";
+    if ($where_env) $sql_env .= ' WHERE ' . implode(' AND ', $where_env);
+    $sql_env .= ' ORDER BY fecha_recepcion DESC LIMIT 100';
+    $stmt_env = $pdo->prepare($sql_env);
+    $stmt_env->execute($params_env);
+    $envios_vista = $stmt_env->fetchAll();
+} catch (PDOException $e) {
+    $vista_disponible = false;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -103,6 +132,83 @@ $viajes     = $data['viajes'];
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista v_envios_completo -->
+        <div class="tabla-wrapper" style="margin-top:32px;">
+            <div class="tabla-header">
+                <h3>📋 Todos los Envíos</h3>
+            </div>
+
+            <?php if (!$vista_disponible): ?>
+            <div class="alert alert-error" style="margin:16px 0;">
+                La vista <code>v_envios_completo</code> no existe aún. Ejecutá
+                <code>sql/v_envios_completo.sql</code> en phpMyAdmin para activar esta sección.
+            </div>
+            <?php else: ?>
+
+            <!-- Filtros inline -->
+            <form method="GET" action="/logitrack/views/admin/dashboard.php"
+                  style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+                <input type="text" name="busq_env" placeholder="Tracking, remitente o destinatario"
+                       value="<?= htmlspecialchars($f_busq_env) ?>"
+                       style="flex:1;min-width:200px;padding:8px 12px;background:var(--panel);border:1px solid var(--borde);border-radius:8px;color:var(--texto);font-size:13px;">
+                <select name="estado_env"
+                        style="padding:8px 12px;background:var(--panel);border:1px solid var(--borde);border-radius:8px;color:var(--texto);font-size:13px;">
+                    <option value="">Todos los estados</option>
+                    <option value="Pendiente"                      <?= $f_estado_env === 'Pendiente'                      ? 'selected' : '' ?>>Pendiente</option>
+                    <option value="En Tránsito"                    <?= $f_estado_env === 'En Tránsito'                    ? 'selected' : '' ?>>En Tránsito</option>
+                    <option value="Ingresado en sucursal destino"  <?= $f_estado_env === 'Ingresado en sucursal destino'  ? 'selected' : '' ?>>En sucursal destino</option>
+                    <option value="Entregado"                      <?= $f_estado_env === 'Entregado'                      ? 'selected' : '' ?>>Entregado</option>
+                </select>
+                <button type="submit" class="btn btn-primary" style="height:38px;">Filtrar</button>
+                <a href="/logitrack/views/admin/dashboard.php" class="btn btn-secondary" style="height:38px;line-height:38px;">Limpiar</a>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tracking</th>
+                        <th>Remitente</th>
+                        <th>Destinatario</th>
+                        <th>Origen</th>
+                        <th>Destino</th>
+                        <th>Peso</th>
+                        <th>Estado</th>
+                        <th>Ubicación actual</th>
+                        <th>Últ. evento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($envios_vista as $ev): ?>
+                <tr>
+                    <td><code style="font-size:12px;"><?= htmlspecialchars($ev['nro_tracking']) ?></code></td>
+                    <td style="font-size:13px;"><?= htmlspecialchars($ev['remitente']) ?></td>
+                    <td style="font-size:13px;"><?= htmlspecialchars($ev['destinatario']) ?></td>
+                    <td style="font-size:12px;color:var(--gris);"><?= htmlspecialchars($ev['sucursal_origen']) ?></td>
+                    <td style="font-size:12px;color:var(--gris);"><?= htmlspecialchars($ev['sucursal_destino']) ?></td>
+                    <td style="font-size:13px;"><?= number_format((float)$ev['peso_kg'], 2) ?> kg</td>
+                    <td>
+                        <?php
+                        $badgeColor = match($ev['estado_actual']) {
+                            'Entregado'  => '#4ade80',
+                            'En Tránsito'=> '#facc15',
+                            'Pendiente'  => '#60a5fa',
+                            default      => '#9ca3af',
+                        };
+                        ?>
+                        <span style="color:<?= $badgeColor ?>;font-size:12px;">● <?= htmlspecialchars($ev['estado_actual']) ?></span>
+                    </td>
+                    <td style="font-size:12px;color:var(--gris);"><?= htmlspecialchars($ev['ubicacion_actual'] ?? '—') ?></td>
+                    <td style="font-size:12px;color:var(--gris);"><?= $ev['fecha_ultimo_evento'] ? date('d/m/Y H:i', strtotime($ev['fecha_ultimo_evento'])) : '—' ?></td>
+                </tr>
+                <?php endforeach; ?>
+                <?php if (empty($envios_vista)): ?>
+                <tr><td colspan="9" style="text-align:center;color:var(--gris);padding:32px;">Sin envíos que coincidan con los filtros</td></tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+            <?php endif; ?>
         </div>
 
     </main>

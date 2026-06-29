@@ -51,10 +51,12 @@ class EmpleadoModel {
     public function getEnviosEnAlmacenOrigen(): array {
         $stmt = $this->pdo->query("
             SELECT e.id_envio, e.nro_tracking, e.peso_kg,
+                   tc.nombre AS tipo_contenido,
                    CONCAT(cd.nombre, ' ', cd.apellido) AS destinatario,
                    so.nombre AS sucursal_origen,
                    sd.nombre AS sucursal_destino
             FROM   envio e
+            JOIN   tipo_contenido tc ON e.id_tipo_cont    = tc.id_tipo_cont
             JOIN   cliente  cd ON e.id_destinatario = cd.id_cliente
             JOIN   sucursal so ON e.id_suc_origen   = so.id_sucursal
             JOIN   sucursal sd ON e.id_suc_destino  = sd.id_sucursal

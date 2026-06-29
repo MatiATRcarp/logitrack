@@ -6,8 +6,10 @@ class ClienteController {
 
     private ClienteModel $model;
     private EnvioModel   $envioModel;
+    private PDO          $pdo;
 
     public function __construct(PDO $pdo) {
+        $this->pdo        = $pdo;
         $this->model      = new ClienteModel($pdo);
         $this->envioModel = new EnvioModel($pdo);
     }
@@ -68,5 +70,64 @@ class ClienteController {
             error_log("ClienteController::solicitarEnvio — " . $e->getMessage());
             return ['ok' => false, 'mensaje' => 'Error al registrar el envío. Intentá nuevamente.'];
         }
+    }
+
+    public function confirmarRecepcion(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /logitrack/views/cliente/a_recibir.php');
+            exit;
+        }
+
+        $idEnvio = (int) ($_POST['id_envio'] ?? 0);
+        if ($idEnvio === 0) {
+            header('Location: /logitrack/views/cliente/a_recibir.php?error=' . urlencode('ID de envío inválido.'));
+            exit;
+        }
+
+        // Verificar que el envío pertenece al cliente logueado (es el destinatario)
+        $stmt = $this->pdo->prepare("
+            SELECT e.id_envio, e.id_suc_destino
+            FROM   envio   e
+            JOIN   cliente c  ON e.id_destinatario = c.id_cliente
+            JOIN   usuario u  ON c.dni             = u.dni
+            WHERE  e.id_envio   = :id_envio
+              AND  u.id_usuario = :usuario_id
+            LIMIT  1
+        ");
+        $stmt->bindValue(':id_envio',    $idEnvio,                        PDO::PARAM_INT);
+        $stmt->bindValue(':usuario_id',  (int) $_SESSION['usuario_id'],   PDO::PARAM_INT);
+        $stmt->execute();
+        $envio = $stmt->fetch();
+
+        if (!$envio) {
+            header('Location: /logitrack/views/cliente/a_recibir.php?error=' . urlencode('No tenés permiso para confirmar este envío.'));
+            exit;
+        }
+
+        try {
+            $this->envioModel->confirmarRecepcion($idEnvio, (int) $envio['id_suc_destino']);
+            header('Location: /logitrack/views/cliente/a_recibir.php?ok=' . urlencode('¡Recepción confirmada correctamente!'));
+        } catch (\Exception $e) {
+            error_log("ClienteController::confirmarRecepcion — " . $e->getMessage());
+            header('Location: /logitrack/views/cliente/a_recibir.php?error=' . urlencode($e->getMessage()));
+        }
+        exit;
+    }
+}
+
+// ─── Punto de entrada directo (POST desde formularios) ────────────────────────
+if (realpath(__FILE__) === realpath($_SERVER['SCRIPT_FILENAME'])) {
+    require_once __DIR__ . '/../config/db.php';
+    require_once __DIR__ . '/../middleware/auth.php';
+    requireRol(['cliente']);
+
+    $ctrl   = new ClienteController($pdo);
+    $action = $_GET['action'] ?? '';
+
+    if ($action === 'confirmarRecepcion') {
+        $ctrl->confirmarRecepcion();
+    } else {
+        header('Location: /logitrack/views/cliente/a_recibir.php');
+        exit;
     }
 }

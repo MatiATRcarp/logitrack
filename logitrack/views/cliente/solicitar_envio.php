@@ -17,8 +17,20 @@ $tipo_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resultado = $controller->solicitarEnvio($cliente['id_cliente'], $_POST);
-    $mensaje   = $resultado['mensaje'];
-    $tipo_msg  = $resultado['ok'] ? 'success' : 'error';
+    if ($resultado['ok']) {
+        $_SESSION['flash_msg']  = "✓ Envío registrado. Tracking: <strong>" . htmlspecialchars($resultado['nro_tracking']) . "</strong>";
+        $_SESSION['flash_tipo'] = 'success';
+        header('Location: /logitrack/views/cliente/solicitar_envio.php');
+        exit;
+    }
+    $mensaje  = $resultado['mensaje'];
+    $tipo_msg = 'error';
+}
+
+if (!empty($_SESSION['flash_msg'])) {
+    $mensaje  = $_SESSION['flash_msg'];
+    $tipo_msg = $_SESSION['flash_tipo'] ?? 'success';
+    unset($_SESSION['flash_msg'], $_SESSION['flash_tipo']);
 }
 
 $form            = $controller->getFormData();
@@ -71,17 +83,19 @@ $destinatarios   = $form['clientes'];
                     </div>
 
                     <div class="form-group full">
-                        <label>Destinatario (quien recibe)</label>
-                        <select name="id_destinatario" required>
-                            <option value="">Seleccioná...</option>
-                            <?php foreach ($destinatarios as $c): ?>
-                                <?php if ((int)$c['id_cliente'] === (int)$cliente['id_cliente']) continue; ?>
-                                <option value="<?= $c['id_cliente'] ?>"
-                                    <?= (isset($_POST['id_destinatario']) && (int)$_POST['id_destinatario'] === (int)$c['id_cliente']) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($c['apellido'] . ', ' . $c['nombre'] . ' — DNI: ' . $c['dni']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label>DNI del destinatario</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="dni-dest" placeholder="Ej: 30123456"
+                                   maxlength="8" pattern="\d{7,8}" autocomplete="off"
+                                   style="flex:1;" inputmode="numeric">
+                            <button type="button" id="btn-buscar-dest"
+                                    class="btn btn-secondary" style="height:42px;white-space:nowrap;">
+                                Buscar
+                            </button>
+                        </div>
+                        <div id="res-dest" style="margin-top:6px;font-size:13px;min-height:18px;"></div>
+                        <input type="hidden" name="id_destinatario" id="id-dest-hidden"
+                               value="<?= (int)($_POST['id_destinatario'] ?? 0) ?: '' ?>">
                     </div>
 
                     <div class="form-group">
@@ -143,5 +157,40 @@ $destinatarios   = $form['clientes'];
         </div>
     </main>
 </div>
+<script>
+(function () {
+    const dniBuscar  = document.getElementById('dni-dest');
+    const btnBuscar  = document.getElementById('btn-buscar-dest');
+    const resultado  = document.getElementById('res-dest');
+    const idHidden   = document.getElementById('id-dest-hidden');
+
+    async function buscar() {
+        const dni = dniBuscar.value.trim();
+        if (!/^\d{7,8}$/.test(dni)) {
+            resultado.innerHTML = '<span style="color:#f87171;">Ingresá un DNI válido (7 u 8 dígitos).</span>';
+            idHidden.value = '';
+            return;
+        }
+        resultado.textContent = 'Buscando...';
+        try {
+            const res  = await fetch('/logitrack/api/buscar_cliente.php?dni=' + encodeURIComponent(dni));
+            const data = await res.json();
+            if (data.found) {
+                resultado.innerHTML = '<span style="color:#4ade80;">✓ ' + data.nombre + ' — DNI: ' + data.dni + '</span>';
+                idHidden.value = data.id_cliente;
+            } else {
+                resultado.innerHTML = '<span style="color:#f87171;">No existe un cliente con ese DNI.</span>';
+                idHidden.value = '';
+            }
+        } catch {
+            resultado.innerHTML = '<span style="color:#f87171;">Error al buscar. Intentá de nuevo.</span>';
+            idHidden.value = '';
+        }
+    }
+
+    btnBuscar.addEventListener('click', buscar);
+    dniBuscar.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+})();
+</script>
 </body>
 </html>

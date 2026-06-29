@@ -46,13 +46,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    elseif ($accion === 'cambiar_sucursal') {
-        $patente     = strtoupper(trim($_POST['patente']  ?? ''));
-        $id_sucursal = (int) ($_POST['id_sucursal']       ?? 0);
-        if ($patente && $id_sucursal) {
-            $pdo->prepare("UPDATE vehiculo SET id_sucursal = :s WHERE patente = :p")
-                ->execute([':s' => $id_sucursal, ':p' => $patente]);
-            $msg = "Sucursal del vehículo {$patente} actualizada."; $msg_tipo = 'success';
+    elseif ($accion === 'editar') {
+        $patente     = strtoupper(trim($_POST['patente']    ?? ''));
+        $id_sucursal = (int) ($_POST['id_sucursal']         ?? 0);
+        $id_tipo_veh = (int) ($_POST['id_tipo_veh']         ?? 0);
+
+        if (!$patente || !$id_sucursal || !$id_tipo_veh) {
+            $msg = 'Completá sucursal y tipo de vehículo.'; $msg_tipo = 'error';
+        } else {
+            try {
+                $pdo->prepare("UPDATE vehiculo SET id_sucursal = :s, id_tipo_veh = :t WHERE patente = :p")
+                    ->execute([':s' => $id_sucursal, ':t' => $id_tipo_veh, ':p' => $patente]);
+                $msg = "Vehículo {$patente} actualizado correctamente."; $msg_tipo = 'success';
+            } catch (PDOException $e) {
+                $msg = 'Error al actualizar el vehículo.'; $msg_tipo = 'error';
+            }
         }
     }
 }
@@ -73,9 +81,10 @@ if ($f_patente !== '') {
 }
 
 $sql = "
-    SELECT v.patente, s.id_sucursal, s.nombre AS sucursal
+    SELECT v.patente, v.id_tipo_veh, s.id_sucursal, s.nombre AS sucursal, t.nombre AS tipo_vehiculo
     FROM   vehiculo v
-    JOIN   sucursal s ON v.id_sucursal = s.id_sucursal";
+    JOIN   sucursal s ON v.id_sucursal = s.id_sucursal
+    JOIN   tipo_vehiculo t ON v.id_tipo_veh = t.id_tipo_veh";
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
@@ -102,7 +111,9 @@ $tipos_vehiculo = $pdo->query("SELECT id_tipo_veh, nombre, capacidad_kg_max FROM
         .btn-sm { padding:4px 12px; font-size:12px; border-radius:8px; border:none; cursor:pointer; font-family:inherit; letter-spacing:1px; }
         .btn-delete { background:rgba(248,113,113,.1); color:#f87171; border:1px solid #f87171; }
         .btn-delete:hover { background:#f87171; color:#fff; }
-        .inline-select { background:var(--fondo); color:var(--texto); border:1px solid var(--borde); border-radius:8px; padding:4px 8px; font-size:12px; font-family:inherit; }
+        .btn-edit { background:rgba(96,165,250,.1); color:#60a5fa; border:1px solid #60a5fa; }
+        .btn-edit:hover { background:#60a5fa; color:#fff; }
+        .modal-box-edit { max-width:420px; text-align:left; }
     </style>
 </head>
 <body>
@@ -110,7 +121,7 @@ $tipos_vehiculo = $pdo->query("SELECT id_tipo_veh, nombre, capacidad_kg_max FROM
     <?php include __DIR__ . '/../layout/sidebar.php'; ?>
     <main class="main-content">
 
-        <input type="checkbox" id="chk-panel-crear" class="toggle-checkbox">
+        <input type="checkbox" id="chk-panel-crear" class="toggle-checkbox" <?= !empty($_GET['crear']) ? 'checked' : '' ?>>
         <input type="checkbox" id="chk-filtros" class="toggle-filtros" <?= $hay_filtros ? 'checked' : '' ?>>
 
         <div class="topbar">
@@ -126,6 +137,16 @@ $tipos_vehiculo = $pdo->query("SELECT id_tipo_veh, nombre, capacidad_kg_max FROM
             </div>
         </div>
 
+        <?php if (!empty($_GET['crear']) && !$msg && $f_sucursal !== ''):
+            $nombre_suc = '';
+            foreach ($sucursales as $s) {
+                if ((string) $s['id_sucursal'] === (string) $f_sucursal) { $nombre_suc = $s['nombre']; break; }
+            }
+        ?>
+        <div class="alert alert-success" style="max-width:520px;margin-bottom:16px;">
+            Sucursal «<?= htmlspecialchars($nombre_suc) ?>» creada. Ahora podés agregar sus vehículos desde el formulario.
+        </div>
+        <?php endif; ?>
         <?php if ($msg): ?>
         <div class="alert alert-<?= $msg_tipo === 'success' ? 'success' : 'error' ?>" style="max-width:420px;margin-bottom:16px;">
             <?= htmlspecialchars($msg) ?>
@@ -165,7 +186,7 @@ $tipos_vehiculo = $pdo->query("SELECT id_tipo_veh, nombre, capacidad_kg_max FROM
                     <select name="id_sucursal" required>
                         <option value="">Seleccioná...</option>
                         <?php foreach ($sucursales as $s): ?>
-                        <option value="<?= $s['id_sucursal'] ?>"><?= htmlspecialchars($s['nombre']) ?></option>
+                        <option value="<?= $s['id_sucursal'] ?>" <?= (string) $s['id_sucursal'] === (string) $f_sucursal ? 'selected' : '' ?>><?= htmlspecialchars($s['nombre']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -187,28 +208,16 @@ $tipos_vehiculo = $pdo->query("SELECT id_tipo_veh, nombre, capacidad_kg_max FROM
         <div class="tabla-wrapper">
             <table>
                 <thead>
-                    <tr><th>Patente</th><th>Sucursal</th><th>Acciones</th></tr>
+                    <tr><th>Patente</th><th>Sucursal</th><th>Tipo</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($vehiculos as $v): ?>
                 <tr>
                     <td><code><?= htmlspecialchars($v['patente']) ?></code></td>
-                    <td>
-                        <!-- Cambiar sucursal -->
-                        <form method="POST" action="/logitrack/views/admin/vehiculos.php" style="margin:0;display:flex;gap:6px;align-items:center;">
-                            <input type="hidden" name="accion"  value="cambiar_sucursal">
-                            <input type="hidden" name="patente" value="<?= htmlspecialchars($v['patente']) ?>">
-                            <select name="id_sucursal" class="inline-select">
-                                <?php foreach ($sucursales as $s): ?>
-                                <option value="<?= $s['id_sucursal'] ?>" <?= $s['id_sucursal'] == $v['id_sucursal'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($s['nombre']) ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <button type="submit" class="btn-sm btn-secondary">Mover</button>
-                        </form>
-                    </td>
-                    <td>
+                    <td><?= htmlspecialchars($v['sucursal']) ?></td>
+                    <td><?= htmlspecialchars($v['tipo_vehiculo']) ?></td>
+                    <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <a href="#edit-vehiculo-<?= htmlspecialchars($v['patente']) ?>" class="btn-sm btn-edit">Editar</a>
                         <a href="#del-vehiculo-<?= htmlspecialchars($v['patente']) ?>" class="btn-sm btn-delete">Eliminar</a>
                         <div class="modal-overlay" id="del-vehiculo-<?= htmlspecialchars($v['patente']) ?>">
                             <div class="modal-box">
@@ -223,11 +232,44 @@ $tipos_vehiculo = $pdo->query("SELECT id_tipo_veh, nombre, capacidad_kg_max FROM
                                 </div>
                             </div>
                         </div>
+                        <div class="modal-overlay" id="edit-vehiculo-<?= htmlspecialchars($v['patente']) ?>">
+                            <div class="modal-box modal-box-edit">
+                                <h3 style="margin-bottom:16px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;">EDITAR VEHÍCULO</h3>
+                                <form method="POST" action="/logitrack/views/admin/vehiculos.php">
+                                    <input type="hidden" name="accion"  value="editar">
+                                    <input type="hidden" name="patente" value="<?= htmlspecialchars($v['patente']) ?>">
+                                    <div class="form-group">
+                                        <label>Patente</label>
+                                        <input type="text" value="<?= htmlspecialchars($v['patente']) ?>" disabled style="opacity:.6;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Sucursal asignada</label>
+                                        <select name="id_sucursal" required>
+                                            <?php foreach ($sucursales as $s): ?>
+                                            <option value="<?= $s['id_sucursal'] ?>" <?= $s['id_sucursal'] == $v['id_sucursal'] ? 'selected' : '' ?>><?= htmlspecialchars($s['nombre']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tipo de vehículo</label>
+                                        <select name="id_tipo_veh" required>
+                                            <?php foreach ($tipos_vehiculo as $t): ?>
+                                            <option value="<?= $t['id_tipo_veh'] ?>" <?= $t['id_tipo_veh'] == $v['id_tipo_veh'] ? 'selected' : '' ?>><?= htmlspecialchars($t['nombre']) ?> (hasta <?= number_format((float) $t['capacidad_kg_max'], 0) ?> kg)</option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="modal-actions" style="margin-top:16px;">
+                                        <a href="#" class="btn btn-secondary">Cancelar</a>
+                                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($vehiculos)): ?>
-                <tr><td colspan="3" style="text-align:center;color:var(--gris);padding:32px;">Sin vehículos registrados</td></tr>
+                <tr><td colspan="4" style="text-align:center;color:var(--gris);padding:32px;">Sin vehículos registrados</td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>

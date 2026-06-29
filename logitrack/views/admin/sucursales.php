@@ -20,8 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $pdo->prepare("INSERT INTO sucursal (nombre) VALUES (:nombre)")
                     ->execute([':nombre' => $nombre]);
-                $msg = "Sucursal «{$nombre}» creada correctamente.";
-                $msg_tipo = 'success';
+                $id_nueva = (int) $pdo->lastInsertId();
+                header("Location: /logitrack/views/admin/vehiculos.php?sucursal={$id_nueva}&crear=1");
+                exit;
             } catch (PDOException $e) {
                 $msg = 'Error al crear la sucursal.';
                 $msg_tipo = 'error';
@@ -38,6 +39,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msg_tipo = 'success';
             } catch (PDOException $e) {
                 $msg = 'No se puede eliminar: la sucursal tiene vehículos o envíos asociados.';
+                $msg_tipo = 'error';
+            }
+        }
+    }
+
+    elseif ($accion === 'editar') {
+        $id     = (int) ($_POST['id_sucursal'] ?? 0);
+        $nombre = trim($_POST['nombre'] ?? '');
+        if (!$id || empty($nombre)) {
+            $msg = 'El nombre de la sucursal no puede estar vacío.';
+            $msg_tipo = 'error';
+        } else {
+            try {
+                $pdo->prepare("UPDATE sucursal SET nombre = :nombre WHERE id_sucursal = :id")
+                    ->execute([':nombre' => $nombre, ':id' => $id]);
+                $msg = 'Sucursal actualizada correctamente.';
+                $msg_tipo = 'success';
+            } catch (PDOException $e) {
+                $msg = 'Error al actualizar la sucursal.';
                 $msg_tipo = 'error';
             }
         }
@@ -79,6 +99,9 @@ $sucursales = $stmt->fetchAll();
         .btn-sm { padding:4px 12px; font-size:12px; border-radius:8px; border:none; cursor:pointer; font-family:inherit; letter-spacing:1px; }
         .btn-delete { background:rgba(248,113,113,.1); color:#f87171; border:1px solid #f87171; }
         .btn-delete:hover { background:#f87171; color:#fff; }
+        .btn-edit { background:rgba(96,165,250,.1); color:#60a5fa; border:1px solid #60a5fa; }
+        .btn-edit:hover { background:#60a5fa; color:#fff; }
+        .modal-box-edit { max-width:420px; text-align:left; }
     </style>
 </head>
 <body>
@@ -144,7 +167,8 @@ $sucursales = $stmt->fetchAll();
                     <td><?= $s['id_sucursal'] ?></td>
                     <td><?= htmlspecialchars($s['nombre']) ?></td>
                     <td><?= $s['cant_vehiculos'] ?></td>
-                    <td>
+                    <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <a href="#edit-sucursal-<?= $s['id_sucursal'] ?>" class="btn-sm btn-edit">Editar</a>
                         <a href="#del-sucursal-<?= $s['id_sucursal'] ?>" class="btn-sm btn-delete">Eliminar</a>
                         <div class="modal-overlay" id="del-sucursal-<?= $s['id_sucursal'] ?>">
                             <div class="modal-box">
@@ -157,6 +181,23 @@ $sucursales = $stmt->fetchAll();
                                         <button type="submit" class="btn-sm btn-delete">Sí, eliminar</button>
                                     </form>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="modal-overlay" id="edit-sucursal-<?= $s['id_sucursal'] ?>">
+                            <div class="modal-box modal-box-edit">
+                                <h3 style="margin-bottom:16px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;">EDITAR SUCURSAL</h3>
+                                <form method="POST" action="/logitrack/views/admin/sucursales.php">
+                                    <input type="hidden" name="accion"      value="editar">
+                                    <input type="hidden" name="id_sucursal" value="<?= $s['id_sucursal'] ?>">
+                                    <div class="form-group">
+                                        <label>Nombre de la sucursal</label>
+                                        <input type="text" name="nombre" value="<?= htmlspecialchars($s['nombre']) ?>" required>
+                                    </div>
+                                    <div class="modal-actions" style="margin-top:16px;">
+                                        <a href="#" class="btn btn-secondary">Cancelar</a>
+                                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </td>

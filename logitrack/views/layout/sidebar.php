@@ -60,6 +60,10 @@ $pagina = basename($_SERVER['PHP_SELF']); // Para marcar enlace activo
            class="nav-link <?= $pagina === 'viajes.php' ? 'active' : '' ?>">
             <span class="icon">🗺️</span> Viajes Activos
         </a>
+        <a href="/logitrack/views/admin/mapa_tracking.php"
+           class="nav-link <?= $pagina === 'mapa_tracking.php' ? 'active' : '' ?>">
+            <span class="icon">📡</span> Mapa de Tracking
+        </a>
         <a href="/logitrack/views/admin/viajes_realizados.php"
            class="nav-link <?= $pagina === 'viajes_realizados.php' ? 'active' : '' ?>">
             <span class="icon">📜</span> Viajes Realizados
@@ -91,6 +95,10 @@ $pagina = basename($_SERVER['PHP_SELF']); // Para marcar enlace activo
         <a href="/logitrack/views/empleado/viajes.php"
            class="nav-link <?= $pagina === 'viajes.php' ? 'active' : '' ?>">
             <span class="icon">🗺️</span> Viajes Activos
+        </a>
+        <a href="/logitrack/views/admin/mapa_tracking.php"
+           class="nav-link <?= $pagina === 'mapa_tracking.php' ? 'active' : '' ?>">
+            <span class="icon">📡</span> Mapa de Tracking
         </a>
 
         <?php elseif ($rol === 'chofer'): ?>
@@ -132,7 +140,7 @@ $pagina = basename($_SERVER['PHP_SELF']); // Para marcar enlace activo
         </a>
         <a href="/logitrack/views/cliente/tracking.php"
            class="nav-link <?= $pagina === 'tracking.php' ? 'active' : '' ?>">
-            <span class="icon">🔍</span> Rastrear Paquete
+            <span class="icon">📍</span> Rastrear mis envíos
         </a>
         <?php endif; ?>
 

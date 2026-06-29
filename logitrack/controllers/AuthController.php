@@ -33,9 +33,11 @@ class AuthController {
                            u.password_hash,
                            u.nombre,
                            u.email,
-                           r.nombre AS rol
+                           r.nombre AS rol,
+                           emp.id_sucursal
                     FROM   usuario u
-                    JOIN   rol     r ON u.id_rol = r.id_rol
+                    JOIN   rol          r   ON u.id_rol  = r.id_rol
+                    LEFT   JOIN empleado emp ON emp.dni   = u.dni
                     WHERE  u.email  = :email
                     AND    u.activo = 1
                     LIMIT  1";
@@ -63,6 +65,10 @@ class AuthController {
         $_SESSION['usuario_email'] = $user['email'];
         $_SESSION['usuario_rol']   = $user['rol'];
         $_SESSION['ultimo_acceso'] = time();
+
+        if ($user['rol'] === 'empleado' && $user['id_sucursal']) {
+            $_SESSION['id_sucursal'] = (int) $user['id_sucursal'];
+        }
 
         // Log de acceso exitoso
         error_log("Login exitoso: {$user['email']} | Rol: {$user['rol']} | IP: " . $_SERVER['REMOTE_ADDR']);

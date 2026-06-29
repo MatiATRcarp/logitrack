@@ -33,15 +33,21 @@ class ChoferModel {
 
     public function getCargaViaje(int $id_viaje): array {
         $stmt = $this->pdo->prepare("
-            SELECT e.nro_tracking, e.peso_kg,
-                   tc.nombre    AS tipo_contenido,
+            SELECT e.id_envio, e.nro_tracking, e.peso_kg,
+                   tc.nombre      AS tipo_contenido,
                    c_dest.nombre  AS dest_nombre, c_dest.apellido AS dest_apellido,
-                   s_dest.nombre  AS sucursal_destino
+                   s_dest.nombre  AS sucursal_destino,
+                   he_last.id_estado,
+                   te.nombre      AS estado_nombre
             FROM   viaje_envio    ve
-            JOIN   envio          e      ON ve.id_envio      = e.id_envio
-            JOIN   tipo_contenido tc     ON e.id_tipo_cont   = tc.id_tipo_cont
+            JOIN   envio          e      ON ve.id_envio       = e.id_envio
+            JOIN   tipo_contenido tc     ON e.id_tipo_cont    = tc.id_tipo_cont
             JOIN   cliente        c_dest ON e.id_destinatario = c_dest.id_cliente
             JOIN   sucursal       s_dest ON e.id_suc_destino  = s_dest.id_sucursal
+            LEFT   JOIN historial_estado he_last ON he_last.id_hist = (
+                SELECT MAX(h2.id_hist) FROM historial_estado h2 WHERE h2.id_envio = e.id_envio
+            )
+            LEFT   JOIN tipo_estado te ON he_last.id_estado = te.id_estado
             WHERE  ve.id_viaje = :id_viaje
         ");
         $stmt->execute([':id_viaje' => $id_viaje]);

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../middleware/auth.php';
 requireRol(['admin']);
 require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../models/UsuarioModel.php';
 
 $hay_filtros = !empty(array_filter($_GET));
 
@@ -17,21 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $apellido = trim($_POST['apellido'] ?? '');
         $email    = trim($_POST['email']    ?? '');
         $telefono = trim($_POST['telefono'] ?? '');
+        $password = $_POST['password'] ?? '';
 
-        if (empty($dni) || empty($nombre) || empty($apellido) || empty($email)) {
+        if (empty($dni) || empty($nombre) || empty($apellido) || empty($email) || empty($password)) {
             $msg = 'Completá todos los campos obligatorios.'; $msg_tipo = 'error';
         } else {
             try {
-                $pdo->prepare("
-                    INSERT INTO cliente (dni, nombre, apellido, email, telefono)
-                    VALUES (:dni, :nombre, :apellido, :email, :telefono)
-                ")->execute([
-                    ':dni'      => $dni,
-                    ':nombre'   => $nombre,
-                    ':apellido' => $apellido,
-                    ':email'    => $email,
-                    ':telefono' => $telefono ?: null,
-                ]);
+                $model = new UsuarioModel($pdo);
+                $model->registrar($dni, $nombre, $apellido, $email, $password, 'cliente', []);
+
+                // Guardar teléfono en cliente (UsuarioModel no lo maneja)
+                $pdo->prepare("UPDATE cliente SET telefono = :tel WHERE dni = :dni")
+                    ->execute([':tel' => $telefono ?: null, ':dni' => $dni]);
+
                 $msg = "Cliente «{$nombre} {$apellido}» creado correctamente.";
                 $msg_tipo = 'success';
             } catch (PDOException $e) {
@@ -39,6 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ? 'El DNI o email ya están registrados.'
                     : 'Error al crear el cliente.';
                 $msg_tipo = 'error';
+            } catch (InvalidArgumentException $e) {
+                $msg = $e->getMessage(); $msg_tipo = 'error';
             }
         }
     }
@@ -276,6 +277,10 @@ $clientes = $stmt->fetchAll();
                         <label>Teléfono</label>
                         <input type="text" name="telefono" placeholder="Ej: 1122334455">
                     </div>
+                    <div class="form-group full">
+                        <label>Contraseña</label>
+                        <input type="password" name="password" placeholder="Contraseña de acceso al sistema" required>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%;height:44px;margin-top:16px;letter-spacing:2px;">
                     CREAR CLIENTE
@@ -286,7 +291,7 @@ $clientes = $stmt->fetchAll();
         <div class="tabla-wrapper">
             <table>
                 <thead>
-                    <tr><th>DNI</th><th>Nombre</th><th>Email</th><th>Estado</th><th>Acciones</th></tr>
+                    <tr><th>DNI</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($clientes as $c): ?>
@@ -294,6 +299,7 @@ $clientes = $stmt->fetchAll();
                     <td><?= htmlspecialchars($c['dni']) ?></td>
                     <td><?= htmlspecialchars($c['apellido'] . ', ' . $c['nombre']) ?></td>
                     <td style="font-size:13px;color:var(--gris);"><?= htmlspecialchars($c['email'] ?? '—') ?></td>
+                    <td style="font-size:13px;color:var(--gris);"><?= htmlspecialchars($c['telefono'] ?? '—') ?></td>
                     <td>
                         <?php if ($c['activo']): ?>
                             <span style="color:#4ade80;font-size:13px;">● Activo</span>
@@ -367,7 +373,7 @@ $clientes = $stmt->fetchAll();
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($clientes)): ?>
-                <tr><td colspan="5" style="text-align:center;color:var(--gris);padding:32px;">Sin clientes registrados</td></tr>
+                <tr><td colspan="6" style="text-align:center;color:var(--gris);padding:32px;">Sin clientes registrados</td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>

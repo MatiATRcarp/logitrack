@@ -11,12 +11,20 @@ $tipo_msg   = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resultado = $controller->crearEnvio($_POST);
     if ($resultado['ok']) {
-        $mensaje  = "✓ Envío creado. Tracking: <strong>{$resultado['nro_tracking']}</strong>";
-        $tipo_msg = 'success';
+        $_SESSION['flash_msg']  = "✓ Envío creado. Tracking: <strong>{$resultado['nro_tracking']}</strong>";
+        $_SESSION['flash_tipo'] = 'success';
+        header("Location: /logitrack/views/empleado/nuevo_envio.php");
+        exit;
     } else {
         $mensaje  = $resultado['mensaje'];
         $tipo_msg = 'error';
     }
+}
+
+if (!empty($_SESSION['flash_msg'])) {
+    $mensaje  = $_SESSION['flash_msg'];
+    $tipo_msg = $_SESSION['flash_tipo'] ?? 'success';
+    unset($_SESSION['flash_msg'], $_SESSION['flash_tipo']);
 }
 
 $form            = $controller->getFormData();
@@ -53,34 +61,34 @@ $clientes        = $form['clientes'];
         <?php endif; ?>
 
         <div class="form-card" style="max-width:640px;">
-            <form method="POST" action="/logitrack/views/empleado/nuevo_envio.php">
+            <form method="POST" action="/logitrack/views/empleado/nuevo_envio.php" autocomplete="off">
 
                 <div class="form-grid">
 
                     <div class="form-group">
-                        <label>Remitente (quien envía)</label>
-                        <select name="id_remitente" required>
-                            <option value="">Seleccioná...</option>
-                            <?php foreach ($clientes as $c): ?>
-                            <option value="<?= $c['id_cliente'] ?>"
-                                <?= (isset($_POST['id_remitente']) && $_POST['id_remitente'] == $c['id_cliente']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($c['apellido'] . ', ' . $c['nombre'] . ' — DNI: ' . $c['dni']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label>DNI del remitente</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="dni-rem" placeholder="Ej: 30123456"
+                                   maxlength="8" pattern="\d{7,8}" autocomplete="off"
+                                   style="flex:1;" inputmode="numeric">
+                            <button type="button" id="btn-buscar-rem"
+                                    class="btn btn-secondary" style="height:42px;white-space:nowrap;">Buscar</button>
+                        </div>
+                        <div id="res-rem" style="margin-top:6px;font-size:13px;min-height:18px;"></div>
+                        <input type="hidden" name="id_remitente" id="id-rem-hidden">
                     </div>
 
                     <div class="form-group">
-                        <label>Destinatario (quien recibe)</label>
-                        <select name="id_destinatario" required>
-                            <option value="">Seleccioná...</option>
-                            <?php foreach ($clientes as $c): ?>
-                            <option value="<?= $c['id_cliente'] ?>"
-                                <?= (isset($_POST['id_destinatario']) && $_POST['id_destinatario'] == $c['id_cliente']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($c['apellido'] . ', ' . $c['nombre'] . ' — DNI: ' . $c['dni']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label>DNI del destinatario</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="dni-dest" placeholder="Ej: 30123456"
+                                   maxlength="8" pattern="\d{7,8}" autocomplete="off"
+                                   style="flex:1;" inputmode="numeric">
+                            <button type="button" id="btn-buscar-dest"
+                                    class="btn btn-secondary" style="height:42px;white-space:nowrap;">Buscar</button>
+                        </div>
+                        <div id="res-dest" style="margin-top:6px;font-size:13px;min-height:18px;"></div>
+                        <input type="hidden" name="id_destinatario" id="id-dest-hidden">
                     </div>
 
                     <div class="form-group">
@@ -132,5 +140,43 @@ $clientes        = $form['clientes'];
         </div>
     </main>
 </div>
+<script>
+function initBuscadorDNI(inputId, btnId, resultId, hiddenId) {
+    const inp    = document.getElementById(inputId);
+    const btn    = document.getElementById(btnId);
+    const res    = document.getElementById(resultId);
+    const hidden = document.getElementById(hiddenId);
+
+    async function buscar() {
+        const dni = inp.value.trim();
+        if (!/^\d{7,8}$/.test(dni)) {
+            res.innerHTML = '<span style="color:#f87171;">DNI inválido (7 u 8 dígitos).</span>';
+            hidden.value = '';
+            return;
+        }
+        res.textContent = 'Buscando...';
+        try {
+            const r    = await fetch('/logitrack/api/buscar_cliente.php?dni=' + encodeURIComponent(dni));
+            const data = await r.json();
+            if (data.found) {
+                res.innerHTML = '<span style="color:#4ade80;">✓ ' + data.nombre + ' — DNI: ' + data.dni + '</span>';
+                hidden.value  = data.id_cliente;
+            } else {
+                res.innerHTML = '<span style="color:#f87171;">No existe un cliente con ese DNI.</span>';
+                hidden.value  = '';
+            }
+        } catch {
+            res.innerHTML = '<span style="color:#f87171;">Error al buscar.</span>';
+            hidden.value  = '';
+        }
+    }
+
+    btn.addEventListener('click', buscar);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+}
+
+initBuscadorDNI('dni-rem',  'btn-buscar-rem',  'res-rem',  'id-rem-hidden');
+initBuscadorDNI('dni-dest', 'btn-buscar-dest', 'res-dest', 'id-dest-hidden');
+</script>
 </body>
 </html>
