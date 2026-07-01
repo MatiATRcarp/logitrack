@@ -1,0 +1,187 @@
+body{
+    background-color:#060b18;
+    background-image:url("/logitrack/public/img/fondo2.webp");
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:cover;
+    margin:0;
+}
+
+h1{ font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; letter-spacing:.02em; }
+h2{ font-family:'Bebas Neue',sans-serif; letter-spacing:.02em; }
+
+.contenedor{ display:flex; height:100vh; }
+
+.izquierda{
+    flex:1;
+    background-color:#060b18;
+    background-image:url("/logitrack/public/img/fondo2.webp");
+    background-size:cover;
+    background-position:center;
+    position:relative;
+}
+
+.info-izquierda{
+    position:absolute;
+    left:80px;
+    bottom:140px;
+    max-width:450px;
+}
+
+.subtitulo{
+    color:#FFCA18;
+    font-family:'DM Sans',sans-serif;
+    font-size:14px;
+    letter-spacing:4px;
+    margin-bottom:15px;
+}
+
+.logo-grande{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:80px;
+    line-height:.9;
+    margin:0;
+    color:white;
+}
+.logo-grande span{ color:#FFCA18; }
+
+.descripcion{
+    color:#8b92a8;
+    font-family:'DM Sans',sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    margin-top:20px;
+}
+
+/* Panel derecho */
+.login{
+    display:flex;
+    flex-direction:column;
+    width:30%;
+    min-width:380px;
+    height:100vh;
+    overflow-y:auto;
+    background-color:#060b18;
+    border-left:1px solid #FFCA18;
+    padding:40px;
+    box-sizing:border-box;
+    color:white;
+    box-shadow:10px 0 10px #000;
+}
+
+.logo{ display:flex; align-items:center; gap:15px; margin-bottom:10px; }
+
+.titulo{ font-family:'Bebas Neue',sans-serif; font-size:35px; margin:0; color:white; }
+.titulo span{ color:#FFCA18; }
+
+.camion{ width:45px; height:45px; border-radius:12px; }
+
+.bienvenida{
+    color:#8b92a8;
+    font-family:'DM Sans',sans-serif;
+    font-size:16px;
+    margin-bottom:15px;
+    margin-top:0;
+}
+
+.login h2{ color:white; font-size:35px; margin-top:0; margin-bottom:15px; }
+
+/* Selector de rol */
+.selector-rol{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.btn-rol{
+    flex:1;
+    height:42px;
+    border:1px solid #1d2b45;
+    border-radius:12px;
+    background:#0f172a;
+    color:#8b92a8;
+    font-size:13px;
+    font-weight:bold;
+    letter-spacing:2px;
+    cursor:pointer;
+    transition:.2s;
+    font-family:'DM Sans',sans-serif;
+}
+
+.btn-rol.activo{
+    background:#FFCA18;
+    color:black;
+    border-color:#FFCA18;
+}
+
+.btn-rol:hover:not(.activo){ border-color:#FFCA18; color:white; }
+
+/* Form */
+.login form{ display:flex; flex-direction:column; gap:12px; }
+
+.login input,
+.login select{
+    height:50px;
+    border:1px solid #1d2b45;
+    border-radius:12px;
+    background:#0f172a;
+    color:white;
+    padding:0 20px;
+    font-size:14px;
+    box-sizing:border-box;
+}
+
+.login select{ color:#6b7280; appearance:none; cursor:pointer; }
+.login select option{ color:white; background:#0f172a; }
+
+.login input::placeholder{ color:#6b7280; }
+
+.login input:focus,
+.login select:focus{ outline:none; border-color:#FFCA18; }
+
+.login button[type="submit"]{
+    height:50px;
+    border:none;
+    border-radius:12px;
+    background-color:#FFCA18;
+    color:black;
+    font-size:15px;
+    font-weight:bold;
+    letter-spacing:3px;
+    cursor:pointer;
+    margin-top:5px;
+}
+.login button[type="submit"]:hover{ opacity:.9; }
+
+.error-msg{
+    color:#ff4d4d;
+    font-family:'DM Sans',sans-serif;
+    font-size:13px;
+    text-align:center;
+    background:rgba(255,77,77,.1);
+    border:1px solid rgba(255,77,77,.3);
+    border-radius:8px;
+    padding:10px;
+}
+
+.ok-msg{
+    color:#4ade80;
+    font-family:'DM Sans',sans-serif;
+    font-size:13px;
+    text-align:center;
+    background:rgba(74,222,128,.1);
+    border:1px solid rgba(74,222,128,.3);
+    border-radius:8px;
+    padding:10px;
+}
+.ok-msg a{ color:#4ade80; }
+
+.link-login{
+    color:#8b92a8;
+    font-family:'DM Sans',sans-serif;
+    font-size:13px;
+    text-align:center;
+    margin:0;
+}
+.link-login a{ color:#FFCA18; text-decoration:none; }
+.link-login a:hover{ text-decoration:underline; }
